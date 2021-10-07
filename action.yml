@@ -1,0 +1,71 @@
+name: 'ECS Deploy Runner Invoker'
+description: 'Invoke the ECS Deploy Runner from a GitHub Actions workflow'
+inputs:
+  gruntwork-installer-version:
+    description: 'gruntwork-installer version'
+    required: true
+    default: 'v0.0.34'
+  terraform-aws-ci-version:
+    description: 'terraform-aws-ci version'
+    required: true
+    default: 'v0.29.10'
+  terraform-aws-security-version:
+    description: 'terraform-aws-security version'
+    required: true
+    default: 'v0.44.10'
+  main-branch-name:
+    description: 'Name of the main branch of the repository'
+    required: true
+    default: 'main'
+  command:
+    description: 'Command to run (plan/apply/docker-image-build)'
+    required: true
+  context:
+    description: 'Context directory in which the deploy runner command will be invoked'
+    required: true
+  build_args:
+    description: 'Build time arguments to use when building Docker images'
+    required: false
+    default: ''
+runs:
+  using: "composite"
+  steps:
+    # Set the git ref which the docker builder will check out during build.
+    # The ref is set to the release tag if the build is triggered on GitHub release, and to the branch on push events.
+    - id: set-docker-builder-ref
+      run: |
+        if [[ ${{ github.event_name }} == 'release' ]]; then
+          echo DOCKER_REF=${{ github.event.release.tag_name }} >> $GITHUB_ENV
+        else
+          echo DOCKER_REF=${{ github.ref }} >> $GITHUB_ENV
+        fi
+      shell: bash
+    # Set the version tag to be used on the image built by the docker-image-builder. It is set to the release tag on
+    # GitHub release events, and to the commit SHA on push events.
+    - id: set-version
+      run: |
+        if [[ ${{ github.event_name }} == 'release' ]]; then
+          echo VERSION=${{ github.event.release.tag_name }} >> $GITHUB_ENV
+        else
+          echo VERSION=${{ github.sha }} >> $GITHUB_ENV
+        fi
+      shell: bash
+    - id: set-terraform-builder-ref
+      run: echo TERRAFORM_REF=${{ github.ref }} >> $GITHUB_ENV
+      shell: bash
+    - id: set-build-args
+      run: echo BUILD_ARGS=${{ inputs.build_args }} >> $GITHUB_ENV
+      shell: bash
+    - id: set-context
+      run: echo CONTEXT=${{ inputs.context }} >> $GITHUB_ENV
+      shell: bash
+    # The infrastructure-deployer CLI needs the AWS_REGION env var to be set to the region that hosts the ECS Deploy Runner
+    - id: set-aws-region
+      run: echo AWS_REGION=$ECS_DEPLOY_RUNNER_REGION >> $GITHUB_ENV
+      shell: bash
+    - id: install-helpers
+      run: ${{ github.action_path }}/helpers/install.sh ${{ inputs.gruntwork-installer-version }} ${{ inputs.terraform-aws-ci-version }} ${{ inputs.terraform-aws-security-version }}
+      shell: bash
+    - id: run-command
+      run: ${{ github.action_path }}/helpers/deploy.sh ${{ inputs.command }}
+      shell: bash
