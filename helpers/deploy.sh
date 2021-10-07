@@ -13,7 +13,7 @@ function invoke_infrastructure_deployer {
   local -r command="$1"
 
   local assume_role_exports
-  assume_role_exports="$(aws-auth --role-arn "arn:aws:iam::$aws_account_id:role/allow-ecs-deploy-runner-invoker-access" --role-duration-seconds 3600)"
+  assume_role_exports="$(aws-auth --role-arn "arn:aws:iam::$AWS_ACCOUNT_ID:role/allow-ecs-deploy-runner-invoker-access" --role-duration-seconds 3600)"
 
   local container
   if [[ "$command" == "plan" ]] || [[ "$command" == "plan-all" ]]; then
