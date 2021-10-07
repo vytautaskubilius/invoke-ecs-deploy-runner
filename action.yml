@@ -30,16 +30,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Set the git ref which the docker builder will check out during build.
-    # The ref is set to the release tag if the build is triggered on GitHub release, and to the branch on push events.
-    - id: set-docker-builder-ref
-      run: |
-        if [[ ${{ github.event_name }} == 'release' ]]; then
-          echo DOCKER_REF=${{ github.event.release.tag_name }} >> $GITHUB_ENV
-        else
-          echo DOCKER_REF=${{ github.ref }} >> $GITHUB_ENV
-        fi
-      shell: bash
     # Set the version tag to be used on the image built by the docker-image-builder. It is set to the release tag on
     # GitHub release events, and to the commit SHA on push events.
     - id: set-version
@@ -49,9 +39,6 @@ runs:
         else
           echo VERSION=${{ github.sha }} >> $GITHUB_ENV
         fi
-      shell: bash
-    - id: set-terraform-builder-ref
-      run: echo TERRAFORM_REF=${{ github.ref }} >> $GITHUB_ENV
       shell: bash
     - id: set-build-args
       run: echo BUILD_ARGS=${{ inputs.build_args }} >> $GITHUB_ENV
