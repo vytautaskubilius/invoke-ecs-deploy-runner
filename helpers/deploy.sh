@@ -26,10 +26,10 @@ function invoke_infrastructure_deployer {
 
   if [[ "$container" == "terraform-planner" ]] || [[ "$container" == "terraform-applier" ]]; then
   (eval "$assume_role_exports" && \
-    infrastructure-deployer --aws-region "$ECS_DEPLOY_RUNNER_REGION" -- "$container" infrastructure-deploy-script --repo git@github.com:"$GITHUB_REPOSITORY" --ref "$GITHUB_REF" --binary "terragrunt" --command "$command" --deploy-path "$CONTEXT")
+    infrastructure-deployer --aws-region "$ECS_DEPLOY_RUNNER_REGION" -- "$container" infrastructure-deploy-script --repo git@github.com:"$GITHUB_REPOSITORY".git --ref "$GITHUB_REF" --binary "terragrunt" --command "$command" --deploy-path "$CONTEXT")
   elif [[ "$container" == "docker-image-builder" ]]; then
   (eval "$assume_role_exports" && \
-    infrastructure-deployer --aws-region "$ECS_DEPLOY_RUNNER_REGION" -- "$container" build-docker-image --repo https://github.com/"$GITHUB_REPOSITORY" --ref "$GITHUB_REF" --context-path "$CONTEXT" --docker-image-tag "$AWS_ACCOUNT_ID.dkr.ecr.$ECR_REPO_REGION.amazonaws.com/$CONTEXT:$VERSION" $BUILD_ARGS)
+    infrastructure-deployer --aws-region "$ECS_DEPLOY_RUNNER_REGION" -- "$container" build-docker-image --repo https://github.com/"$GITHUB_REPOSITORY".git --ref "$GITHUB_REF" --context-path "$CONTEXT" --docker-image-tag "$AWS_ACCOUNT_ID.dkr.ecr.$ECR_REPO_REGION.amazonaws.com/$CONTEXT:$VERSION" $BUILD_ARGS)
   fi
 
 }
